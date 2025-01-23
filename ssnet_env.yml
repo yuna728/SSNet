@@ -1,0 +1,20 @@
+name: ssnet_new
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - gcc=13.2.0
+  - gxx=13.2.0
+  - matplotlib=3.2.2
+  - pandas=1.3.5
+  - pip=23.3.1
+  - scikit-learn=1.3.0
+  - seaborn=0.12.2
+  - tqdm=4.66.1
+  - yaml=0.2.5
+  - pip:
+    - keras==2.12.0
+    - numpy==1.23.5
+    - tensorflow==2.12.0
+    - tensorrt==8.6.1
