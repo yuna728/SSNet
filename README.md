@@ -110,7 +110,7 @@ This file consists of one column, pred.
 ~~~
 python prediction.py \
     --attention \
-    --test_file dataset/sample.tfrecord \
+	--test_file dataset/sample.tfrecord \
 	--model_path model/model_200_371200.h5 \
 	--summary_dir sample_pred \
     --res_file attn.pkl \
