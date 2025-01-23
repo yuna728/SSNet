@@ -34,7 +34,7 @@ python training.py \
     --train_file dataset/train.tfrecord \
     --valid_file dataset/valid.tfrecord \
     --checkpoint_dir checkpoint/ \
-	--summary_dir summary/ \
+    --summary_dir summary/ \
     --gpu 0 \
     --batch_size 16 \
     --summary_step 100 \
@@ -71,7 +71,7 @@ python training.py \
     --train_file dataset/sample.tfrecord \
     --valid_file dataset/sample.tfrecord \
     --checkpoint_dir checkpoint/ \
-	--summary_dir summary/ \
+    --summary_dir summary/ \
     --gpu 0 \
     --batch_size 16 \
     --summary_step 100 \
@@ -95,8 +95,8 @@ Specify start_epoch and start_step along with model_path and opt_path.
 ~~~
 python prediction.py \
     --test_file dataset/test.tfrecord \
-	--model_path model/model_200_371200.h5 \
-	--summary_dir sample_pred \
+    --model_path model/model_200_371200.h5 \
+    --summary_dir sample_pred \
     --res_file pred.pkl \
     --gpu 0 \
     --batch_size 16 \
@@ -110,9 +110,9 @@ This file consists of one column, pred.
 ~~~
 python prediction.py \
     --attention \
-	--test_file dataset/sample.tfrecord \
-	--model_path model/model_200_371200.h5 \
-	--summary_dir sample_pred \
+    --test_file dataset/sample.tfrecord \
+    --model_path model/model_200_371200.h5 \
+    --summary_dir sample_pred \
     --res_file attn.pkl \
     --gpu 0 \
     --batch_size 16 \
