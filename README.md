@@ -91,12 +91,12 @@ Specify start_epoch and start_step along with model_path and opt_path.
 
 ## 4. Prediction
 
-If you want to use trained models, you can download them from the below link.
-[SSNet_base](https://drive.google.com/file/d/1_y6PM3OKtx80WYLboI3cWuWIbhqc-ju-/view?usp=sharing)
-[SSNet_gtex](https://drive.google.com/file/d/1qnPg50LiWZ9hS1SKSitPeICUDGqTJxT9/view?usp=sharing)
-[SSNet_gtex_pangolin](https://drive.google.com/file/d/1wR9xkkZeTnxyQvhiRQagWbxvN16RkLsI/view?usp=sharing)
-[SSNet_pangolin](https://drive.google.com/file/d/1xlgH99UkFeH5W4osXjljCdqeC7uSCECj/view?usp=sharing)
-[SSNet_pangolin_gtex](https://drive.google.com/file/d/1eywvsURfKi5ONktMZlj41Db73Q_CJbWl/view?usp=sharing)
+If you want to use trained models, you can download them from the below link.  
+[SSNet_base](https://drive.google.com/file/d/1_y6PM3OKtx80WYLboI3cWuWIbhqc-ju-/view?usp=sharing)  
+[SSNet_gtex](https://drive.google.com/file/d/1qnPg50LiWZ9hS1SKSitPeICUDGqTJxT9/view?usp=sharing)  
+[SSNet_gtex_pangolin](https://drive.google.com/file/d/1wR9xkkZeTnxyQvhiRQagWbxvN16RkLsI/view?usp=sharing)  
+[SSNet_pangolin](https://drive.google.com/file/d/1xlgH99UkFeH5W4osXjljCdqeC7uSCECj/view?usp=sharing)  
+[SSNet_pangolin_gtex](https://drive.google.com/file/d/1eywvsURfKi5ONktMZlj41Db73Q_CJbWl/view?usp=sharing)  
 
 ### Prediction Only
 ~~~
