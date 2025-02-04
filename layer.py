@@ -279,7 +279,7 @@ class EncoderLayer(Layer):
     self.num_heads = num_heads
     self.dff = dff
 
-    self.mha = MultiHeadAttention(d_model, num_heads)
+    self.mha = GlobalAttention(d_model, num_heads)
     self.ffn = FFN(d_model, dff)
 
     self.layernorm1 = LayerNormalization(epsilon=1e-6, dtype=tf.float32)
