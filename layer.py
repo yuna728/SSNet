@@ -213,7 +213,7 @@ class CompressAttention(Layer):
     scaled_attention = tf.transpose(scaled_attention, perm=[0, 1, 3, 2, 4])  # (batch_size, num_areas, l_q, num_heads, depth)
     concat_attention = tf.reshape(scaled_attention, (batch_size, self.num_areas, -1, self.d_model))  # (batch_size, num_areas, l_q, d_model)
 
-    return output, attention_weights
+    return concat_attention, attention_weights
 
   def get_config(self):
     config = {'d_model': self.d_model, 'num_areas': self.num_areas}
