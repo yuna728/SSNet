@@ -243,7 +243,7 @@ class CompressLayer(Layer):
     self.num_heads = num_heads
     self.dff = dff
 
-    self.ca = CompressAttention(d_model, d_out, num_areas, num_heads)
+    self.ca = CompressAttention(d_model, num_areas, num_heads)
     self.ffn = FFN(d_out, dff)
 
     self.layernorm1 = LayerNormalization(epsilon=1e-6, dtype=tf.float32)
