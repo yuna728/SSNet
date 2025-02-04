@@ -256,12 +256,12 @@ class CompressLayer(Layer):
   def call(self, x, training, mask):
     attn_output, attn_weights = self.ca(x, mask, training=training)  # (batch_size, num_areas, d_out)
     attn_output = self.dropout2(attn_output, training=training)
-    out1 = self.layernorm1(simp_comp + attn_output)  # (batch_size, num_areas, d_out)
+    out1 = self.layernorm1(x + attn_output)  # (batch_size, num_areas, d_out)
     out1 = tf.cast(out1, tf.float16)
 
     ffn_output = self.ffn(out1)  # (batch_size, num_areas, d_out)
     ffn_output = self.dropout3(ffn_output, training=training)
-    out2 = self.layernorm2(simp_comp + out1 + ffn_output)  # (batch_size, num_areas, d_out)
+    out2 = self.layernorm2(x + out1 + ffn_output)  # (batch_size, num_areas, d_out)
     out2 = tf.cast(out2, tf.float16)
 
     return out2, attn_weights
