@@ -16,9 +16,9 @@ INPUT_LEN = 100000
 
 def parse_record(example):    
     context_features = {
-        "seq" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
-        "da" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
-        "ie" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
+        "seq" : tf.io.FixedLenFeature([INPUT_LEN], dtype=tf.int64),
+        "da" : tf.io.FixedLenFeature([INPUT_LEN], dtype=tf.int64),
+        "ie" : tf.io.FixedLenFeature([INPUT_LEN], dtype=tf.int64),
     }
 
     context_parsed = tf.io.parse_example(serialized=example, features=context_features)
@@ -57,7 +57,7 @@ def build_model():
 
   return model
 
-def train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, num_epoch, model_path, opt_path, gamma, alpha1, alpha2, init_lr, start_epoch, start_step, summary_step):
+def train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, pseudo_batch_size, num_epoch, model_path, opt_path, gamma, alpha1, alpha2, init_lr, start_epoch, start_step, summary_step):
   if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
@@ -127,19 +127,30 @@ def train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, num_e
     optimizer.build(model.trainable_weights)
     optimizer.set_weights(opt_weight)
 
-  optimizer = mixed_precision.LossScaleOptimizer(inner_optimizer)
+  optimizer = mixed_precision.LossScaleOptimizer(optimizer)
   num_warmup_steps = 80000
 
+  def flat_gradients(grads_or_idx_slices: tf.Tensor) -> tf.Tensor:
+    if type(grads_or_idx_slices) == tf.IndexedSlices:
+        return tf.scatter_nd(
+            tf.expand_dims(grads_or_idx_slices.indices, 1),
+            grads_or_idx_slices.values,
+            grads_or_idx_slices.dense_shape
+        )
+    return grads_or_idx_slices
+
   @tf.function
-  def train_step(batch):
+  def train_step(batch, step_gradient_accumulation):
     with tf.GradientTape() as tape:
       pred_da, pred_ie, _, _ = model(batch["seq"], training=True)
       loss = loss_fn(batch["ie"], pred_ie)
       loss_da = loss_fn_da(batch["da"], pred_da)
       scaled_loss = optimizer.get_scaled_loss(loss+loss_da)
     scaled_gradients = tape.gradient(scaled_loss, model.trainable_variables)
-    gradients = optimizer.get_unscaled_gradients(scaled_gradients)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    tmp_gradients = optimizer.get_unscaled_gradients(scaled_gradients)
+
+    tmp_gradients = [flat_gradients(g) / step_gradient_accumulation for g in tmp_gradients]
+    optimizer.apply_gradients(zip(tmp_gradients, model.trainable_variables))
 
     train_loss(loss)
     train_loss_da(loss_da)
@@ -178,6 +189,8 @@ def train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, num_e
   train_log_dir = os.path.join(summary_dir,'history_'+current_time)
   train_summary_writer = tf.summary.create_file_writer(train_log_dir)
 
+  step_gradient_accumulation = pseudo_batch_size // batch_size
+
   global_step = start_step
 
   lr = init_lr * (1.0- tf.cast(global_step, tf.float32)/800000.)
@@ -199,18 +212,19 @@ def train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, num_e
       metric.reset_states()
 
     for step, batch_train in enumerate(tqdm(dataset_train, mininterval=5, desc="[train]")):
-      train_step(batch_train)
+      train_step(batch_train, step_gradient_accumulation)
 
-      global_step += 1
+      if (step + 1) % step_gradient_accumulation == 0:
+        global_step += 1
 
-      if global_step % summary_step == 0:
-        write_train_summary(train_summary_writer, [train_loss, train_loss_da], train_ie_metrics+train_da_metrics, step=global_step, epoch=epoch+1)
+        if global_step % summary_step == 0:
+          write_train_summary(train_summary_writer, [train_loss, train_loss_da], train_ie_metrics+train_da_metrics, step=global_step, epoch=epoch+1)
 
-      # update learning rate
-      lr = init_lr * (1.0- tf.cast(global_step, tf.float32)/800000.)
-      is_warmup = tf.cast(global_step < num_warmup_steps, tf.float32)
-      lr = (1.0 - is_warmup) * lr + is_warmup * (init_lr * tf.cast(global_step, tf.float32)/tf.cast(num_warmup_steps, tf.float32))
-      optimizer.learning_rate = lr
+        # update learning rate
+        lr = init_lr * (1.0- tf.cast(global_step, tf.float32)/800000.)
+        is_warmup = tf.cast(global_step < num_warmup_steps, tf.float32)
+        lr = (1.0 - is_warmup) * lr + is_warmup * (init_lr * tf.cast(global_step, tf.float32)/tf.cast(num_warmup_steps, tf.float32))
+        optimizer.learning_rate = lr
 
     print("")
 
@@ -247,7 +261,8 @@ def main():
   parser.add_argument('--checkpoint_dir', type=str)
   parser.add_argument('--summary_dir', type=str)
   parser.add_argument('--gpu', type=int, default=None)
-  parser.add_argument('--batch_size', type=int, default=1)
+  parser.add_argument('--batch_size', type=int, default=4)
+  parser.add_argument('--pseudo_batch_size', type=int, default=16)
   parser.add_argument('--summary_step', type=int, default=10)
   parser.add_argument('--num_epoch', type=int, default=20)
   parser.add_argument('--model_path', type=str, default=None)
@@ -267,6 +282,7 @@ def main():
   train_file = args.train_file
   valid_file = args.valid_file
   batch_size = args.batch_size
+  pseudo_batch_size = args.pseudo_batch_size
   summary_step = args.summary_step
   num_epoch = args.num_epoch
   model_path = args.model_path
@@ -281,7 +297,7 @@ def main():
   
   checkpoint_dir = args.checkpoint_dir
   summary_dir = args.summary_dir
-  train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, num_epoch, model_path, opt_path, gamma, alpha1, alpha2, lr, start_epoch, start_step, summary_step)
+  train(train_file, valid_file, checkpoint_dir, summary_dir, batch_size, pseudo_batch_size, num_epoch, model_path, opt_path, gamma, alpha1, alpha2, lr, start_epoch, start_step, summary_step)
 
   return
 

@@ -1,0 +1,10 @@
+##fileformat=VCFv4.2
+##reference=GRCh37
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	69091	.	A	G	.	.	.
+1	11869	.	G	T	.	.	.
+2	17143	.	A	T	.	.	.
+17	41242962	.	T	C	.	.	.
+17	41223094	.	T	G	.	.	.
+3	385749	.	TTA	AT	.	.	.
+5	112174	.	C	GTT	.	.	.

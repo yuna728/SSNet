@@ -1,0 +1,11 @@
+*.sh*
+*.tfrecord
+__pycache__/
+checkpoint/
+summary/
+res/
+hg19/
+
+# 個別ファイル
+dataset_example.py
+dataset_example.sh
