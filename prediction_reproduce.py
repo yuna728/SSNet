@@ -9,33 +9,6 @@ from model import SSNet
 
 input_len = 100000
 
-def parse_record(example):    
-    context_features = {
-        #"id" : tf.io.FixedLenFeature([], dtype=tf.int64),
-        "seq" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
-        "da" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
-        "ie" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
-    }
-
-    context_parsed = tf.io.parse_example(serialized=example, features=context_features)
-    
-    #idx = context_parsed["id"]
-    seq = context_parsed["seq"]
-    seq_onehot = tf.one_hot(seq, 5)
-    mask_n = tf.reduce_all(tf.equal(seq_onehot, 0.), axis=-1, keepdims=True)
-    n_token = tf.tile(0.25 * tf.cast(mask_n, tf.float32),[1,4])
-    # PAD:[0, 0, 0, 0], A:[1, 0, 0, 0], C:[0, 1, 0, 0,], G:[0, 0, 1, 0], T:[0, 0, 0, 1], N:[0.25, 0.25, 0.25, 0.25]
-    in_encoder = seq_onehot[:,1:] + n_token # 100000 * 4
-
-    da = context_parsed["da"] # Donor: 0, Acceptor: 1, None: 2, Pad: 3 100000 * 1
-
-    #PAD:-1, INTRON:0, EXON:1
-    ie = tf.expand_dims(tf.cast(context_parsed['ie'], tf.int64), axis=1)
-    #PAD:0, INTRON:1, EXON:2
-    out_label = ie + 1 # 100000 * 1
-
-    return {"in_encoder":in_encoder, "da": da, "ie": out_label}
-
 def build_model():
   conv_dim = 64
   conv_kernel = [4, 16, 64]
@@ -53,6 +26,31 @@ def build_model():
   model = SSNet(conv_dim, conv_kernel, num_c_layers, num_t_layers, d_comp, d_model, num_areas, num_heads_comp, num_heads, dff_comp, dff, pe_input)
 
   return model
+
+def parse_record_diff(example):    
+    context_features = {
+        "ref_seq" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
+        "alt_seq" : tf.io.FixedLenFeature([input_len], dtype=tf.int64),
+    }
+
+    context_parsed = tf.io.parse_example(serialized=example, features=context_features)
+    
+    ref_seq = context_parsed["ref_seq"]
+    ref_seq_onehot = tf.one_hot(ref_seq, 5)
+    ref_mask_n = tf.reduce_all(tf.equal(ref_seq_onehot, 0.), axis=-1, keepdims=True)
+    ref_n_token = tf.tile(0.25 * tf.cast(ref_mask_n, tf.float32),[1,4])
+    # PAD:[0, 0, 0, 0], A:[1, 0, 0, 0], C:[0, 1, 0, 0,], G:[0, 0, 1, 0], T:[0, 0, 0, 1], N:[0.25, 0.25, 0.25, 0.25]
+    ref_seq_in = ref_seq_onehot[:,1:] + ref_n_token # 100000 * 4
+
+    alt_seq = context_parsed["alt_seq"]
+    alt_seq_onehot = tf.one_hot(alt_seq, 5)
+    alt_mask_n = tf.reduce_all(tf.equal(alt_seq_onehot, 0.), axis=-1, keepdims=True)
+    alt_n_token = tf.tile(0.25 * tf.cast(alt_mask_n, tf.float32),[1,4])
+    # PAD:[0, 0, 0, 0], A:[1, 0, 0, 0], C:[0, 1, 0, 0,], G:[0, 0, 1, 0], T:[0, 0, 0, 1], N:[0.25, 0.25, 0.25, 0.25]
+    alt_seq_in = alt_seq_onehot[:,1:] + alt_n_token # 100000 * 4
+
+    return {"ref_seq":ref_seq_in, "alt_seq":alt_seq_in}
+
  
 def parse_record_diff_fix(example):    
     context_features = {

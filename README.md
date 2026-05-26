@@ -163,6 +163,31 @@ Specify the annotation file as [grch37.txt](https://github.com/Illumina/SpliceAI
 Specify the directory containing the fasta files separated by chromosome (e.g., chr1.fa) for fasta_dir.  
 Fasta files are downloadable from [hg19](https://hgdownload.cse.ucsc.edu/goldenpath/hg19/chromosomes/) and [hg38](https://hgdownload.cse.ucsc.edu/goldenpath/hg38/chromosomes/).
 
+### Prediction for Reproducing Results in the Paper
+~~~
+python prediction_reproduce.py \
+    --test_file dataset/brca.tfrecord \
+    --data_type BRCA \
+    --model_path model/model_200_371200.h5 \
+    --summary_dir res \
+    --res_file pred.pkl \
+    --gpu 0 \
+    --batch_size 4 \
+~~~
+
+Please specify corresponding "data_type" for each dataset.
+All the data types are below:
+ - SpliceVarDB
+ - BRCA
+ - sscvdb
+ - iravdb
+ - DMD
+ - clinvar
+ - IgM
+ - FAS
+ - attn_insilico
+ - BRCA_attn
+
 ## Contact
 For questions or inquiries about this repository or the splice prediction model, please contact:
 
